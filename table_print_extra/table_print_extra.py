@@ -14,17 +14,23 @@ import os
 import copy
 import tableprint as tp
 
+def max_column_width(column):
+    """
+    Max width of a column
+    """
+
+    return column \
+            .apply(lambda x: len(str(x))) \
+            .max()
+
 def max_width_for(frame, item):
     """
     The maximum width of a column is either the maximum size of the strings
     within that column, OR it is the name of the column itself.
     """
-    product_width = frame[item] \
-            .apply(lambda x: len(str(x))) \
-            .max()
 
     name_width = len(str(item))
-    return max(product_width, name_width)
+    return max(max_column_width(frame[item]), name_width)
 
 def _find_column_widths(data_frame, fixed_columns):
     return {column:max_width_for(data_frame, column) for column in
@@ -35,7 +41,7 @@ class TablePrintAutoColumnFormatter:
     This is the wrapper class around TablePrint, which does the formatting
     """
 
-    def __init__(self, data_frame, angel_column, squish_column=None):
+    def __init__(self, data_frame, angel_column=None, squish_column=None):
         """
         data_frame is a DataFrame
 
@@ -73,7 +79,7 @@ class TablePrintAutoColumnFormatter:
         prints the data frame in a nice manner which scales to the terminal size
         available to the user.
         """
-        screen_width, widths = self.fit_screen()
+        screen_width, widths, modified_data_frame = self.fit_screen()
 
         tp.banner(
             self.banner(),
@@ -86,7 +92,7 @@ class TablePrintAutoColumnFormatter:
                 width=screen_width
             )
 
-        tp.dataframe(self.data_frame, width=widths)
+        tp.dataframe(modified_data_frame, width=widths)
 
     @staticmethod
     def item_padding():
@@ -98,25 +104,25 @@ class TablePrintAutoColumnFormatter:
 
     @staticmethod
     def squish_calculator(allocated_width, column_measurements, squish=None,
-                         angel=None):
+                          angel=None):
         """
         :Overridable: (but not necessary)
         The calculator object which computes the necessary column sizes
         """
         return SquishCalculator(
-                allocated_width,
-                column_measurements,
-                squish=squish,
-                angel=angel,
+            allocated_width,
+            column_measurements,
+            squish=squish,
+            angel=angel,
         )
 
     @staticmethod
-    def squisher():
+    def squisher(fitted_column_widths, data_frame):
         """
         :Overridable: (also not necessary)
         The squishing object which performs the modifiation to the object
         """
-        return Squisher()
+        return DataFrameSquisher(fitted_column_widths, data_frame)
 
     def fit_screen(self):
         """
@@ -137,42 +143,98 @@ class TablePrintAutoColumnFormatter:
             squish=self.squish_column,
             angel=self.angel_column,
         )
-        fitted_column_widths = calculator.squish_columns()
-        modified_column_widths = self.squisher().squish(fitted_column_widths,
-                                                        self.data_frame)
+        desired_column_widths = calculator.squish_columns()
 
-        widths = tuple([modified_column_widths[column] for column in columns])
-        return screen_width, widths
+        squisher = self.squisher(
+            desired_column_widths,
+            self.data_frame)
 
-class Squisher:
+        squisher.squish()
+        modified_dataframe = squisher.squished_dataframe
 
+        printing_widths = tuple(desired_column_widths.values())
+        return screen_width, printing_widths, modified_dataframe
+
+class DataFrameSquisher:
     """
     Takes the column data, and squishes the columns based on that
     """
 
     __ellipses = '...'
 
-    def squish(self, requested_column_size, dataframe):
-        """
-        Modifies the column data
-        """
-        for column, amount in requested_column_size.items():
-            self._squish_column_by(dataframe[column], amount)
+    def __init__(self, requested_column_size, dataframe):
+        self.requested_column_size = requested_column_size
+        self.dataframe = dataframe
+        self.squished_dataframe = copy.deepcopy(dataframe)
 
-        return dataframe
+        # alias for internal use only
+        self._sdf = self.squished_dataframe
+
+    def squish(self):
+        """
+        Modifies the column data and name of
+        squished dataframe only
+
+        Merely a coordinator of the other public methods
+        for convienence.
+        """
+        self.modify_column_data()
+        self.modify_column_names()
+
+    def modify_column_data(self):
+        """
+        Changes the column values based
+        on the requested_column_size
+        """
+        for column in self._sdf.columns:
+            ideal_length = self.requested_column_size[column]
+
+            # unable to use apply with lambda since
+            # the context changes and self is uncallable
+            for index, value in enumerate(self._sdf[column].values):
+                self._sdf[column][index] = self._squish_to(value, ideal_length)
+
+    def modify_column_names(self):
+        """
+        Changes the column names based
+        on the requested_column_size
+        """
+        columns = {}
+        for column in self._sdf.columns:
+            old_name = column
+            new_length = self.requested_column_size[column]
+            new_name = self._squish_to(old_name, new_length)
+            columns.update({old_name: new_name})
+
+        self._sdf.rename(columns=columns, inplace=True)
 
     def set_ellipses(self, new_ellipses):
         """
         The only responsible way to set ellipses
+        Convention is to be three characters i.e. '...'
         """
         self.__ellipses = new_ellipses
 
-    def _squish_column_by(self, column, squish_amount):
-        column = column.apply(lambda x: self._squish_by(x, squish_amount))
+    def _squish_to(self, line, ideal_length):
+        if len(line) <= ideal_length:
+            return line
 
-    def _squish_by(self, line, amount):
-        truncated_line = line[:len(line)-amount]
-        return truncated_line[:len(truncated_line)-len(self.__ellipses)] + self.__ellipses
+        if self.__ideal(line, ideal_length):
+            return self._squish_line(line, ideal_length, self.__ellipses)
+
+        ellipses = "." * (ideal_length - 1)
+        return self._squish_line(line, ideal_length, ellipses)
+
+    def __ideal(self, line, ideal_length):
+        return(
+            (len(line) > ideal_length)
+            and (ideal_length > len(self.__ellipses))
+        )
+
+    @staticmethod
+    def _squish_line(line, ideal_length, ellipses):
+        truncated_line = line[:ideal_length]
+        return truncated_line[:len(truncated_line)-len(ellipses)] + ellipses
 
 class SquishCalculator:
     """
@@ -235,11 +297,14 @@ class SquishCalculator:
             s_ratio, s_amount = self._find_squish_ratio(column)
 
             if s_ratio >= self.__max_squish_ratio:
-               s_amount = self._squish_by_ratio(column)
+                s_amount = self._squish_by_ratio(column)
 
             self._update_column_measurements(
                 column,
                 s_amount
             )
 
-        return self.column_measurements
+        if self._within_allocated_width():
+            return self.column_measurements
+
+        return self.squish_columns()
