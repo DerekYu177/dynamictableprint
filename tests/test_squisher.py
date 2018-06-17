@@ -1,82 +1,13 @@
 """
-Tests the table print extra module
+Tests the squisher
 """
 
 import unittest
 import copy
-import os
-from unittest import mock as mock
 import pandas as pd
 
-from dynamictableprint import(
-    max_column_width,
-    max_width_for,
-    SquishCalculator,
-    DataFrameSquisher,
-    DynamicTablePrint,
-)
-
-class TestPublicFunctions(unittest.TestCase):
-    """
-    Tests the public module functions
-    """
-
-    def setUp(self):
-        length = 30
-
-        self.raw_data = {
-            'column_name_longest': ["A"*2 for i in range(length)],
-            'data_name_longer': ["B"*20 for i in range(length)],
-        }
-
-        self.dataframe = pd.DataFrame(self.raw_data)
-
-    def test_max_width_for_when_title_longest(self):
-        """
-        Tests whether #max_width_for returns when the column name
-        is wider than the column itself
-        """
-        max_length = max_width_for(self.dataframe, 'column_name_longest')
-        self.assertEqual(max_length, len('column_name_longest'))
-
-    def test_max_width_for_when_data_name_longest(self):
-        """
-        Tests whether #max_width_for returns correctly the width
-        of the column
-        """
-        max_length = max_width_for(self.dataframe, 'data_name_longer')
-        self.assertEqual(max_length, 20)
-
-def mock_terminal_size(_):
-    """
-    Does what it says
-    """
-    return [102]
-
-class TestDynamicTablePrint(unittest.TestCase):
-    def setUp(self):
-        length = 30
-        raw_data = {
-            'something_good': ["FOOD"*2 for i in range(length)],
-            'something_bad': ["WORK"*20 for i in range(length)],
-            'squished': ["SQUISHABLE"*4 for i in range(length)],
-            'saved': ["CANADA"*3 for i in range(length)],
-        }
-        dataframe = pd.DataFrame(
-            raw_data,
-            columns=[*raw_data],
-        )
-        self.auco = DynamicTablePrint(
-            dataframe,
-            angel_column='saved',
-            squish_column='squished',
-        )
-
-    @mock.patch('os.get_terminal_size', side_effect=mock_terminal_size)
-    def test_fit_screen(self, os_function):
-        screen_width, widths, _modified_dataframe = self.auco.fit_screen()
-        self.assertEqual(screen_width, 100)
-        self.assertEqual((10, 52, 26, 12), widths)
+from dynamictableprint.squisher import DataFrameSquisher, SquishCalculator
+from dynamictableprint.utils import max_column_width, max_width_for
 
 class TestDataFrameSquisher(unittest.TestCase):
     """
