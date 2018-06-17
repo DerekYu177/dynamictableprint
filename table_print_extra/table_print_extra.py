@@ -2,12 +2,6 @@
 This module aims to add extra functionality to the already amazing
 TablePrint.
 
-Use Case:
-We have a pandas table, and the user wants the table to have columns that
-fit the size of the string data. If there are many columns, the
-TablePrintAutoColumnFormatter will look at the available screen
-real estate, and squish columns to fit, while still perserving readability
-overall.
 """
 
 import os
@@ -36,7 +30,7 @@ def _find_column_widths(data_frame, fixed_columns):
     return {column:max_width_for(data_frame, column) for column in
             fixed_columns}
 
-class TablePrintAutoColumnFormatter:
+class DynamicTablePrint:
     """
     This is the wrapper class around TablePrint, which does the formatting
     """
@@ -88,7 +82,7 @@ class TablePrintAutoColumnFormatter:
 
         if self.data_frame.empty:
             tp.banner(
-                'ERROR: No results',
+                self.empty_banner(),
                 width=screen_width
             )
 

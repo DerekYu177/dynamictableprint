@@ -13,7 +13,7 @@ from table_print_extra import(
     max_width_for,
     SquishCalculator,
     DataFrameSquisher,
-    TablePrintAutoColumnFormatter,
+    DynamicTablePrint,
 )
 
 class TestPublicFunctions(unittest.TestCase):
@@ -53,7 +53,7 @@ def mock_terminal_size(_):
     """
     return [102]
 
-class TestTablePrintAutoColumnFormatter(unittest.TestCase):
+class TestDynamicTablePrint(unittest.TestCase):
     def setUp(self):
         length = 30
         raw_data = {
@@ -66,7 +66,7 @@ class TestTablePrintAutoColumnFormatter(unittest.TestCase):
             raw_data,
             columns=[*raw_data],
         )
-        self.auco = TablePrintAutoColumnFormatter(
+        self.auco = DynamicTablePrint(
             dataframe,
             angel_column='saved',
             squish_column='squished',
