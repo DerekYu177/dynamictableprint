@@ -1,0 +1,13 @@
+*.pyc
+__pycache__
+build/
+dist/
+lib/
+lib64/
+*.egg-info/
+*.egg
+*.zip
+docs/_build
+.coverage
+.mypy_cache/
+tags
