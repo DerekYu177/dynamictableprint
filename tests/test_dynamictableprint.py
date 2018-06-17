@@ -8,7 +8,7 @@ import os
 from unittest import mock as mock
 import pandas as pd
 
-from table_print_extra import(
+from dynamictableprint import(
     max_column_width,
     max_width_for,
     SquishCalculator,
