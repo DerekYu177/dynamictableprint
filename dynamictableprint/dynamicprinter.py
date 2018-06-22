@@ -11,14 +11,23 @@ from .squisher import DataFrameSquisher, SquishCalculator
 class DynamicTablePrint:
     """
     This is the wrapper class around TablePrint, which does the formatting
+    for tables of a specific format:
+
+    | title |
+    |c|c|c|c|
+
+    This class forces the columns to fit within the constraints of the
+    available window
     """
 
     def __init__(self, data_frame, angel_column=None, squish_column=None):
         """
-        data_frame is a DataFrame
+        data_frame is the Pandas DataFrame object, or an object which will
+        respond in the same manner
 
-        The angel_column is a string which matches a column.
-        This column will be protected from the dynamic shrinking that will occur
+        The angel_column is a string which matches a column name.
+        This column will be the last column to be squished in a single
+        iteration
 
         This is in contrast to the squish column, which is the first
         on any chopping block

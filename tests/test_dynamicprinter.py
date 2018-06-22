@@ -38,6 +38,9 @@ class TestDynamicTablePrint(unittest.TestCase):
 
     @mock.patch('os.get_terminal_size', side_effect=mock_terminal_size)
     def test_fit_screen(self, _os_function):
+        """
+        Integration test
+        """
         screen_width, widths, _modified_dataframe = self.auco.fit_screen()
         self.assertEqual(screen_width, 100)
         self.assertEqual((10, 52, 26, 12), widths)

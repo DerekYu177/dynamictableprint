@@ -4,6 +4,7 @@ Tests utils
 
 import unittest
 import pandas as pd
+
 from dynamictableprint.utils import max_width_for
 
 class TestPublicFunctions(unittest.TestCase):
