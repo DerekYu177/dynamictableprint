@@ -7,7 +7,6 @@ lib64/
 *.egg-info/
 *.egg
 *.zip
-docs/_build
 .coverage
-.mypy_cache/
+.pytest_cache/
 tags
