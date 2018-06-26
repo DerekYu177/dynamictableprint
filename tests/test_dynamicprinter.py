@@ -12,7 +12,7 @@ def mock_terminal_size(_):
     """
     Does what it says
     """
-    return [102]
+    return [80]
 
 class TestDynamicTablePrint(unittest.TestCase):
     """
@@ -26,24 +26,47 @@ class TestDynamicTablePrint(unittest.TestCase):
             'squished': ["SQUISHABLE"*4 for i in range(length)],
             'saved': ["CANADA"*3 for i in range(length)],
         }
-        dataframe = pd.DataFrame(
+        self.dataframe = pd.DataFrame(
             raw_data,
             columns=[*raw_data],
         )
         self.auco = DynamicTablePrint(
-            dataframe,
+            self.dataframe,
             angel_column='saved',
             squish_column='squished',
         )
 
     @mock.patch('os.get_terminal_size', side_effect=mock_terminal_size)
-    def test_fit_screen(self, _os_function):
+    def test_system_screen_width(self, _os_function):
         """
-        Integration test
+        Tests that we make the correct call to os.get_terminal_size
         """
-        screen_width, widths, _modified_dataframe = self.auco.fit_screen()
-        self.assertEqual(screen_width, 100)
-        self.assertEqual((10, 52, 26, 12), widths)
+        screen_width, _widths, _modified_dataframe = self.auco.fit_screen()
+        self.assertEqual(screen_width, 80)
+
+    def test_system_fallback_width(self):
+        """
+        In the case where we cannot get at the system settings, we set a default
+        """
+        self.assertEqual(self.auco.screen_width, self.auco.config.default_screen_width)
+
+    def test_settable_screen_width(self):
+        """
+        User is allowed to set the screen width
+        """
+        dtp = DynamicTablePrint(self.dataframe, screen_width=100)
+        self.assertEqual(dtp.screen_width, 100)
+
+    def test_printable_screen_width(self):
+        """
+        Ensuring that we have the appropriate amount of space for columns
+        """
+        default_screen_width = 80
+        printable_width = default_screen_width - 2 - 3*3
+
+        assert DynamicTablePrint.printable_screen_width(
+            ['something_good', 'something_bad', 'squished', 'saved'],
+            default_screen_width) == printable_width
 
 if __name__ == '__main__':
     unittest.main()

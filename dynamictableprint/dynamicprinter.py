@@ -20,7 +20,20 @@ class DynamicTablePrint:
     available window
     """
 
-    def __init__(self, data_frame, angel_column=None, squish_column=None):
+    def determine_screen_width(self, screen_width):
+        if screen_width is not None:
+            return screen_width
+        else:
+            try:
+                # subtract two so that we get some spacing
+                screen_width = os.get_terminal_size(0)[0] - 2
+            except OSError:
+                screen_width = self.config.default_screen_width
+
+        return screen_width
+
+    def __init__(self, data_frame, angel_column=None, squish_column=None,
+            screen_width=None):
         """
         data_frame is the Pandas DataFrame object, or an object which will
         respond in the same manner
@@ -36,23 +49,12 @@ class DynamicTablePrint:
         self.squish_column = squish_column
         self.angel_column = angel_column
 
-    @staticmethod
-    def banner():
-        """
-        :Overridable:
+        self.config = DefaultConfig()
 
-        This is the banner printed at the top of the table
-        """
-        return 'No Banner Set'
+        self.screen_width = self.determine_screen_width(screen_width)
 
-    @staticmethod
-    def empty_banner():
-        """
-        :Overridable:
-
-        What happens when there is no content to display
-        """
-        return 'ERROR: No results'
+        self.squish_calculator = SquishCalculator
+        self.squisher = DataFrameSquisher
 
     def write_to_screen(self):
         """
@@ -63,47 +65,29 @@ class DynamicTablePrint:
         screen_width, widths, modified_data_frame = self.fit_screen()
 
         tp.banner(
-            self.banner(),
-            width=screen_width
+            self.config.banner,
+            width=screen_width,
         )
 
         if self.data_frame.empty:
             tp.banner(
-                self.empty_banner(),
-                width=screen_width
+                self.config.empty_banner,
+                width=screen_width,
             )
 
         tp.dataframe(modified_data_frame, width=widths)
 
     @staticmethod
-    def item_padding():
+    def printable_screen_width(columns, screen_width):
         """
-        :Overridable:
-        Padding is the difference between the total item width and the screen width
+        Calculates the total amount of printable real estate
+        Takes into acccount the columns and gaps between them
         """
-        return 8
-
-    @staticmethod
-    def squish_calculator(allocated_width, column_measurements, squish=None,
-                          angel=None):
-        """
-        :Overridable: (but not necessary)
-        The calculator object which computes the necessary column sizes
-        """
-        return SquishCalculator(
-            allocated_width,
-            column_measurements,
-            squish=squish,
-            angel=angel,
-        )
-
-    @staticmethod
-    def squisher(fitted_column_widths, data_frame):
-        """
-        :Overridable: (also not necessary)
-        The squishing object which performs the modifiation to the object
-        """
-        return DataFrameSquisher(fitted_column_widths, data_frame)
+        number_columns = len(columns)
+        screen_width_exc_side_bars = screen_width - 2 # bar and space
+        screen_width_inc_columns = screen_width_exc_side_bars \
+            - 3 * (number_columns - 1)
+        return screen_width_inc_columns
 
     def fit_screen(self):
         """
@@ -113,13 +97,14 @@ class DynamicTablePrint:
         If the columns naturally fit within the screen width, the we do nothing.
         We will shrink the next largest column until it will fit the correct size
         """
-        screen_width = os.get_terminal_size(0)[0]-2
-
         columns = self.data_frame.columns.values.tolist()
         column_widths = find_column_widths(self.data_frame, columns)
 
+        printable_screen_width = self.printable_screen_width(
+            columns, self.screen_width)
+
         calculator = self.squish_calculator(
-            screen_width,
+            printable_screen_width,
             column_widths,
             squish=self.squish_column,
             angel=self.angel_column,
@@ -134,5 +119,29 @@ class DynamicTablePrint:
         modified_dataframe = squisher.squished_dataframe
 
         printing_widths = tuple(desired_column_widths.values())
-        return screen_width, printing_widths, modified_dataframe
+        return self.screen_width, printing_widths, modified_dataframe
 
+class DefaultConfig:
+    """
+    Holds the data for configuration
+    We use __slots__ to prevent ourselves from modifying this
+    object outside of the class
+    """
+    __slots__ = [
+        "banner",
+        "empty_banner",
+        "item_padding",
+        "default_screen_width",
+    ]
+
+    def __init__(self):
+        self.default_screen_width = 80
+
+        """ Banner printed at the top of the table """
+        self.banner = 'No Banner Set'
+
+        """ Banner when there is no content """
+        self.empty_banner = 'Error: No results'
+
+        """ Difference between the total item width and the screen width """
+        self.item_padding = 8

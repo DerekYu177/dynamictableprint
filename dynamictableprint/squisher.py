@@ -42,7 +42,7 @@ class DataFrameSquisher:
             # unable to use apply with lambda since
             # the context changes and self is uncallable
             for index, value in enumerate(self._sdf[column].values):
-                self._sdf[column][index] = self._squish_to(value, ideal_length)
+                self._sdf.loc[index, column] = self._squish_to(value, ideal_length)
 
     def modify_column_names(self):
         """
@@ -66,6 +66,8 @@ class DataFrameSquisher:
         self.__ellipses = new_ellipses
 
     def _squish_to(self, line, ideal_length):
+        line = str(line)
+
         if len(line) <= ideal_length:
             return line
 

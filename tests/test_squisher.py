@@ -93,6 +93,21 @@ class TestDataFrameSquisher(unittest.TestCase):
                 [*self.requested_column_size.values()][index]
             )
 
+    def test_boolean_columns(self):
+        raw_data = {
+            'ab' : [True for i in range(10)]
+        }
+        dataframe = pd.DataFrame(raw_data, columns=[*raw_data])
+        requested_column_size = {'ab': 2}
+        df_squisher = DataFrameSquisher(
+            requested_column_size,
+            dataframe
+        )
+        df_squisher.squish()
+        squished_dataframe = df_squisher.squished_dataframe
+        self.assertEqual(
+            max_width_for(squished_dataframe, 'ab'), 2)
+
 class TestSquishCalculator(unittest.TestCase):
     """
     Tests the SquishCalculator
