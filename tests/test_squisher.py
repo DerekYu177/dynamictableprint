@@ -172,7 +172,7 @@ class TestSquishCalculator(unittest.TestCase):
         o_columns = {'a':10, 'b':10, 'c':10, 'squish':20, 'angel':100}
         calculator = SquishCalculator(121, o_columns, angel='angel', squish='squish')
         s_columns = calculator.squish_columns()
-        o_columns.update({'squish':16, 'a':8, 'b':8, 'c':8, 'angel':81})
+        o_columns.update({'squish':8, 'a':4, 'b':4, 'c':5, 'angel':100})
         self.assertEqual(s_columns, o_columns)
 
     def test_recursive_squishing(self):
