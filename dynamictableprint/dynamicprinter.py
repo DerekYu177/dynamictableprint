@@ -21,6 +21,12 @@ class DynamicTablePrint:
     """
 
     def determine_screen_width(self, screen_width):
+        """
+        If the user wants to set the screen_width, we abide by that decision
+        If not, we use the system configuration
+        else, we fallback to the default screen width that is given in the
+        DefaultConfig
+        """
         if screen_width is not None:
             return screen_width
         else:
@@ -33,7 +39,7 @@ class DynamicTablePrint:
         return screen_width
 
     def __init__(self, data_frame, angel_column=None, squish_column=None,
-            screen_width=None):
+                 screen_width=None):
         """
         data_frame is the Pandas DataFrame object, or an object which will
         respond in the same manner
@@ -84,21 +90,37 @@ class DynamicTablePrint:
         Takes into acccount the columns and gaps between them
         """
         number_columns = len(columns)
-        screen_width_exc_side_bars = screen_width - 2 # bar and space
-        screen_width_inc_columns = screen_width_exc_side_bars \
-            - 3 * (number_columns - 1)
+        screen_width_exc_side_bars = screen_width - 2 # bars
+        screen_width_inc_columns = \
+            screen_width_exc_side_bars - 3 * (number_columns - 1)
         return screen_width_inc_columns
+
+    @staticmethod
+    def _table_width(column_widths):
+        """
+        The inverse of printable_screen_width
+        Instead of finding the space for text
+        We use the text to find the size of the table
+        Cast to int since sum(*) yields a numpy.int64
+        """
+        number_columns = len(column_widths.values())
+        table_width = sum(column_widths.values())
+        table_width = table_width + 2 # bars
+        table_width = table_width + 3 * (number_columns - 1)
+        return int(table_width)
+
+    @staticmethod
+    def _column_widths(dataframe):
+        columns = dataframe.columns.values.tolist()
+        column_widths = find_column_widths(dataframe, columns)
+        return column_widths, columns
 
     def fit_screen(self):
         """
         We take the full length of the available screen
         and force the widths to be less than or equal to this
-
-        If the columns naturally fit within the screen width, the we do nothing.
-        We will shrink the next largest column until it will fit the correct size
         """
-        columns = self.data_frame.columns.values.tolist()
-        column_widths = find_column_widths(self.data_frame, columns)
+        column_widths, columns = self._column_widths(self.data_frame)
 
         printable_screen_width = self.printable_screen_width(
             columns, self.screen_width)
@@ -116,10 +138,12 @@ class DynamicTablePrint:
             self.data_frame)
 
         squisher.squish()
-        modified_dataframe = squisher.squished_dataframe
+        modified_data_frame = squisher.squished_dataframe
 
         printing_widths = tuple(desired_column_widths.values())
-        return self.screen_width, printing_widths, modified_dataframe
+        table_width = self._table_width(desired_column_widths)
+
+        return table_width, printing_widths, modified_data_frame
 
 class DefaultConfig:
     """
