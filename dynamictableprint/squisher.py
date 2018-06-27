@@ -116,8 +116,7 @@ class SquishCalculator:
                 not in [self.squish, self.angel]]
 
     def _squish_order(self):
-        return [col for col in [self.squish, *self._non_priority_columns(),
-                                self.angel] if col is not None]
+        return [col for col in [self.squish, *self._non_priority_columns()] if col is not None]
 
     def _update_column_measurements(self, target, squish_amount):
         self.column_measurements[target] = self.column_measurements[target] - squish_amount
