@@ -26,10 +26,20 @@ class TestDynamicTablePrint(unittest.TestCase):
             'squished': ["SQUISHABLE"*4 for i in range(length)],
             'saved': ["CANADA"*3 for i in range(length)],
         }
-        self.dataframe = pd.DataFrame(
+        self.dataframe = pd.DataFrame.from_dict(
             raw_data,
-            columns=[*raw_data],
         )
+
+        self.blank_dataframe = pd.DataFrame.from_dict(
+            {
+                'stupid': [],
+                'idiot': [],
+                'how could I forget': [],
+                'that blank': [],
+                'was a think': [],
+            }
+        )
+
         self.auco = DynamicTablePrint(
             self.dataframe,
             angel_column='saved',
@@ -67,6 +77,16 @@ class TestDynamicTablePrint(unittest.TestCase):
         assert DynamicTablePrint.printable_screen_width(
             ['something_good', 'something_bad', 'squished', 'saved'],
             default_screen_width) == printable_width
+
+    def test_empty_dataframe(self):
+        """
+        if printing an empty dataframe, nothing should happen
+        """
+        dtp = DynamicTablePrint(self.blank_dataframe)
+        dtp.config.empty_banner = 'Test in Progress'
+        dtp.squish_calculator = mock.MagicMock()
+        dtp.write_to_screen()
+        dtp.squish_calculator.assert_not_called()
 
 if __name__ == '__main__':
     unittest.main()

@@ -136,10 +136,31 @@ class SquishCalculator:
         """
         self.__max_squish_ratio = new_ratio
 
+    @staticmethod
+    def _is_blank(measurement):
+        if measurement is None:
+            return False
+
+        return True
+
+    def is_blank(self, measurements):
+        """
+        Returns true if all values in the measurements iterator
+        are empty
+        """
+        filtered = filter(self._is_blank, measurements)
+        if not filtered:
+            return True
+
+        return False
+
     def squish_columns(self):
         """
         Squishes the columns to fit within the allocated_width
         """
+        if self.is_blank(self.column_measurements):
+            return self.column_measurements
+
         for column in self._squish_order():
 
             if self._within_allocated_width():

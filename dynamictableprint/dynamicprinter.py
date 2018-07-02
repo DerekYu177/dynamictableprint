@@ -80,6 +80,7 @@ class DynamicTablePrint:
                 self.config.empty_banner,
                 width=screen_width,
             )
+            return
 
         tp.dataframe(modified_data_frame, width=widths)
 
@@ -90,7 +91,7 @@ class DynamicTablePrint:
         Takes into acccount the columns and gaps between them
         """
         number_columns = len(columns)
-        screen_width_exc_side_bars = screen_width - 2 # bars
+        screen_width_exc_side_bars = screen_width - DefaultConfig().edge_width
         screen_width_inc_columns = \
             screen_width_exc_side_bars - 3 * (number_columns - 1)
         return screen_width_inc_columns
@@ -105,7 +106,7 @@ class DynamicTablePrint:
         """
         number_columns = len(column_widths.values())
         table_width = sum(column_widths.values())
-        table_width = table_width + 2 # bars
+        table_width = table_width + DefaultConfig().edge_width
         table_width = table_width + 3 * (number_columns - 1)
         return int(table_width)
 
@@ -120,6 +121,11 @@ class DynamicTablePrint:
         We take the full length of the available screen
         and force the widths to be less than or equal to this
         """
+        if self.data_frame.empty:
+            return (self.config.default_screen_width,
+                    self.config.default_screen_width - self.config.edge_width,
+                    self.data_frame)
+
         column_widths, columns = self._column_widths(self.data_frame)
 
         printable_screen_width = self.printable_screen_width(
@@ -154,8 +160,8 @@ class DefaultConfig:
     __slots__ = [
         "banner",
         "empty_banner",
-        "item_padding",
         "default_screen_width",
+        "edge_width",
     ]
 
     def __init__(self):
@@ -167,5 +173,5 @@ class DefaultConfig:
         """ Banner when there is no content """
         self.empty_banner = 'Error: No results'
 
-        """ Difference between the total item width and the screen width """
-        self.item_padding = 8
+        """ Width due to spaces on either side of the table"""
+        self.edge_width = 2
