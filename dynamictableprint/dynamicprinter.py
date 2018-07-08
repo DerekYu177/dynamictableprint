@@ -51,7 +51,7 @@ class DynamicTablePrint:
         This is in contrast to the squish column, which is the first
         on any chopping block
         """
-        self.data_frame = data_frame
+        self.data_frame = data_frame.reset_index(drop=True)
         self.squish_column = squish_column
         self.angel_column = angel_column
 

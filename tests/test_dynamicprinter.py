@@ -88,5 +88,19 @@ class TestDynamicTablePrint(unittest.TestCase):
         dtp.write_to_screen()
         dtp.squish_calculator.assert_not_called()
 
+    def test_set_index(self):
+        """
+        check to see that the index has been fixed during initialization
+        """
+        dataframe = {
+            'big_column' : ['a' * i for i in range(30, 0, -1)]
+        }
+        dataframe = pd.DataFrame.from_dict(dataframe)
+        dataframe = dataframe.sort_values(by='big_column')
+        dtp = DynamicTablePrint(dataframe, screen_width=100)
+        indices = dtp.data_frame.index.values
+        for index in range(30):
+            assert index == indices[index]
+
 if __name__ == '__main__':
     unittest.main()
