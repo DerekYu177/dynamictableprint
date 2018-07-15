@@ -16,8 +16,8 @@ nicely within the given constraints. When the console width changes, the
 program will need to be reloaded, but will adjust to fit the new screen.
 
 ## Installation
-You'll have to clone directly from github into your source repo for now.
-Looking into improving this!
+You can install this program via pip
+> pip install dynamictableprint
 
 ## Usage
 ```py
@@ -45,9 +45,21 @@ data_frame = pd.DataFrame(data=d)
 
 dtp = DynamicTablePrint(data_frame, angel_column='Foods', squish_column='places')
 dtp.banner('Things!')
-dtp.
 dtp.write_to_screen()
 ```
+
+### Without boundaries
+![Without Boundaries](without_limitation.png)
+Without boundaries to the terminal size, the data frame is displayed normally
+
+### With boundaries
+![With Boundaries](with_limitation.png)
+With boundaries, the squish column is the first column that is compressed, with
+the other columns following suit until the final column, the `angel_column`.
+In terms of priority it follows this rule.
+
+### Priority
+*****Squish Column -> Other Columns -> Angel Column**
 
 The `squish_column` represents the column that you would like to be squished
 first. Typically the 'squish factor' is 20% at most, but will dynamically vary
@@ -56,9 +68,9 @@ you would prefer to be modified last, that is, having the highest priority on
 being the same.
 
 ## Dependencies
-`python3.6`, an possibly other versions `>3.0`
-`tableprint`
-`pandas`
+- `python3.6`, an possibly other versions `>3.0`
+- `tableprint`
+- `pandas`
 
 ## License
 `MIT`
