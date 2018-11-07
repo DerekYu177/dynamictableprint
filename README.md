@@ -50,10 +50,12 @@ dtp.write_to_screen()
 
 ### Without boundaries
 ![Without Boundaries](without_limitation.png)
+
 Without boundaries to the terminal size, the data frame is displayed normally
 
 ### With boundaries
 ![With Boundaries](with_limitation.png)
+
 With boundaries, the squish column is the first column that is compressed, with
 the other columns following suit until the final column, the `angel_column`.
 In terms of priority it follows this rule.
